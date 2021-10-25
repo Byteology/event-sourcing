@@ -1,0 +1,40 @@
+name: Push
+
+on: 
+  push:
+    branches:
+      - '**'
+      
+jobs:
+  build-and-analyze:
+    runs-on: ubuntu-latest
+    env:
+      sonar_project_key: Byteology_event-sourcing
+      
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.0.x
+          
+      - name: Checkout
+        uses: actions/checkout@v2
+        
+      - name: Sonarqube Begin
+        run: | 
+          dotnet tool install --global dotnet-sonarscanner
+          dotnet sonarscanner begin /o:byteology /k:${sonar_project_key} /d:sonar.login=${{ secrets.SONAR_TOKEN }} /s:$GITHUB_WORKSPACE/.sonar/SonarQube.Analysis.xml
+          
+      - name: Restore
+        run: dotnet restore
+        
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --no-build --configuration Release --verbosity normal --settings ./.sonar/coverlet.runsettings --logger:trx
+        
+      - name: Sonarqube End
+        run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
