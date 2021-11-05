@@ -1,9 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-	<IsPackable>True</IsPackable>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>True</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <Authors>Byteology</Authors>
     <Company>Byteology Ltd</Company>
     <RepositoryUrl>https://github.com/Byteology/event-sourcing.git</RepositoryUrl>
@@ -15,6 +17,12 @@
     <PackageProjectUrl>https://github.com/Byteology/event-sourcing</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Projection\**" />
+    <EmbeddedResource Remove="Projection\**" />
+    <None Remove="Projection\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="..\Icon.png">
@@ -33,6 +41,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Byteology.GuardClauses" Version="1.2.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
