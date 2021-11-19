@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v2
         
       - name: Sonarqube Begin
+        if: ${{ false }} # SonarQube doesn't support .NET 6 at the moment
         run: | 
           dotnet tool install --global dotnet-sonarscanner
           dotnet sonarscanner begin /o:byteology /k:${sonar_project_key} /d:sonar.login=${{ secrets.SONAR_TOKEN }} /s:$GITHUB_WORKSPACE/.sonar/SonarQube.Analysis.xml
@@ -35,6 +36,7 @@ jobs:
         run: dotnet test --no-build --configuration Release --verbosity normal --settings ./.sonar/coverlet.runsettings --logger:trx
         
       - name: Sonarqube End
+        if: ${{ false }} # SonarQube doesn't support .NET 6 at the moment
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
