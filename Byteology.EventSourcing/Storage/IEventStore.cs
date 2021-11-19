@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace Byteology.EventSourcing.Storage;
 
-namespace Byteology.EventSourcing.Storage
+using Byteology.EventSourcing.EventHandling;
+
+public interface IEventStore
 {
-    public interface IEventStore : IDataStore
-    {
-        void AddEvent(IEvent @event, long aggregateVersion);
-
-        (IAggregateRoot? aggregate, long version)? GetLatestSnapshot(Guid aggregateId);
-        (IEnumerable<IEvent> events, long lastVersion)? GetOrderedEvents(Guid aggregateId, long? minVersion);
-    }
+    IEnumerable<IEventContext> GetEventStream(Guid aggregateRootId);
+    void AddEvents(IEnumerable<IEventContext> eventStream);
+    IEnumerable<IEventContext> Commit();
 }

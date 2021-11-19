@@ -1,31 +1,27 @@
-﻿using Byteology.GuardClauses;
-using System;
-using System.Collections.Generic;
+﻿namespace Byteology.EventSourcing.EventHandling;
 
-namespace Byteology.EventSourcing.EventHandling
+public sealed class EventContext<TEvent> : IEventContext
+    where TEvent : IEvent
 {
-    public interface IEventContext
+    public Guid AggregateId { get; }
+    public Type AggregateType { get; }
+    public DateTimeOffset Timestamp { get; }
+    public ulong EventSequence { get; }
+    public TEvent Event { get; }
+
+    internal EventContext(
+        Guid aggregateId, 
+        Type aggregateType, 
+        DateTimeOffset eventTimestamp,
+        ulong eventSequence,
+        TEvent @event)
     {
-        IAggregateRoot? Aggregate { get; }
-        IList<IEvent> EventsToRaise { get; }
+        AggregateId = aggregateId;
+        AggregateType = aggregateType;
+        Timestamp = eventTimestamp;
+        EventSequence = eventSequence;
+        Event = @event;
     }
 
-    public sealed class EventContext<TEvent, TAggregate> : IEventContext
-        where TEvent : class, IEvent
-        where TAggregate : class, IAggregateRoot
-    {
-        public TEvent Event { get; }
-        public TAggregate? Aggregate { get; set; }
-        public IList<IEvent> EventsToRaise { get; } = new List<IEvent>();
-
-        public EventContext(TEvent @event, TAggregate? aggregate)
-        {
-            Guard.Argument(@event, nameof(@event)).NotNull();
-
-            Event = @event;
-            Aggregate = aggregate;
-        }
-
-        IAggregateRoot? IEventContext.Aggregate => Aggregate;
-    }
+    IEvent IEventContext.Event => Event;
 }
