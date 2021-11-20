@@ -15,14 +15,15 @@ public class DefaultCommandHandler<TCommand> : ICommandHandler<TCommand>
 
     public virtual IEnumerable<IEventContext> HandleCommand(TCommand command, DateTimeOffset timestamp)
     {
-        AggregateRootBuilder rootBuilder = new(_eventStore);
+        using IEventStoreContext eventStoreContext = _eventStore.CreateContext();
+
+        AggregateRootBuilder rootBuilder = new(eventStoreContext);
         IAggregateRoot root = rootBuilder.Build(command.AggregateRootId, command.AggregateType);
 
         root.ExecuteCommand(command, timestamp);
 
         IEnumerable<IEventContext> eventStream = root.GetUncommitedEvents();
-        _eventStore.AddEvents(eventStream);
-        eventStream = _eventStore.Commit();
+        eventStoreContext.AddEvents(eventStream);
         root.MarkAllEventsAsCommited();
 
         return eventStream;

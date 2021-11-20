@@ -5,11 +5,11 @@ using Byteology.EventSourcing.Storage;
 
 public class AggregateRootBuilder
 {
-    private readonly IEventStore _eventStore;
+    private readonly IEventStoreContext _eventStoreContext;
 
-    public AggregateRootBuilder(IEventStore eventStore)
+    public AggregateRootBuilder(IEventStoreContext eventStoreContext)
     {
-        _eventStore = eventStore;
+        _eventStoreContext = eventStoreContext;
     }
 
     public IAggregateRoot Build(Guid id, Type type)
@@ -26,7 +26,7 @@ public class AggregateRootBuilder
 
         root.Id = id;
 
-        IEnumerable<IEventContext> eventStream = _eventStore.GetEventStream(id);
+        IEnumerable<IEventContext> eventStream = _eventStoreContext.GetEventStream(id);
         foreach (IEventContext record in eventStream)
             root.ReplayEvent(record);
 
