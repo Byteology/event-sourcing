@@ -31,7 +31,7 @@ public abstract class AggregateRoot : IAggregateRoot
             contextType,
             BindingFlags.NonPublic | BindingFlags.Instance,
             null,
-            new object[] { timestamp, sequence, @event },
+            new object[] { Id, timestamp, sequence, @event },
             null)!;
 
         if (aggregateType.IsAssignableTo(handlerType))

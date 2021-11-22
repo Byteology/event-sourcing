@@ -1,29 +1,63 @@
 ﻿namespace Byteology.EventSourcing.EntityFramework;
 
 using Byteology.EventSourcing.EventHandling;
-using Byteology.EventSourcing.Storage;
+using Byteology.EventSourcing.EventHandling.Storage;
 using Microsoft.EntityFrameworkCore;
 
-public abstract class EventStoreContext<TEventContext> : DbContext, IEventStoreContext
-    where TEventContext : class, IEventContext
+public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
+    where TEventEntity : class, IEventEntity, new()
 {
-    protected EventStoreContext(DbContextOptions options) : base(options) { }
+    private readonly SerializationRegistry<IEvent> _eventSerializationRegistry;
 
-    protected abstract TEventContext CreateNewRecord(IEventContext eventContext);
+    public EventStoreContext(
+        DbContextOptions dbOptions,
+        SerializationRegistry<IEvent> eventSerializationRegistry) : base(dbOptions) 
+    {
+        _eventSerializationRegistry = eventSerializationRegistry;
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<TEventContext>();
+        modelBuilder.Entity<TEventEntity>()
+            .HasKey(nameof(IEventEntity.Id));
+
+        modelBuilder.Entity<TEventEntity>()
+            .HasIndex(nameof(IEventEntity.AggregateRootId), nameof(IEventEntity.Sequence))
+            .IsUnique();
     }
 
-    IEnumerable<IEventContext> IEventStoreContext.GetEventStream(Guid aggregateRootId)
-        => Set<TEventContext>().Where(e => e.AggregateId == aggregateRootId).ToList();
-
-    void IEventStoreContext.AddEvents(IEnumerable<IEventContext> eventStream)
+    protected virtual TEventEntity CreateNewEntity(IEventStreamRecord eventContext)
     {
-        Set<TEventContext>().AddRange(eventStream.Select(e => CreateNewRecord(e)));
+        TEventEntity entity = new ();
+        entity.AggregateRootId = eventContext.AggregateRootId;
+        entity.Sequence = eventContext.EventSequence;
+        entity.Timestamp = eventContext.EventTimestamp;
+        entity.Payload = _eventSerializationRegistry.Serialize(eventContext.Event);
+
+        return entity;
+    }
+
+    private IEventStreamRecord convertEntityToRecord(TEventEntity entity)
+    {
+        IEvent @event = _eventSerializationRegistry.Deserialize(entity.Type, entity.Payload);
+        EventStreamRecord record = new(entity.AggregateRootId, @event, entity.Timestamp, entity.Sequence);
+        return record;
+    }
+
+    IEnumerable<IEventStreamRecord> IEventStoreContext.GetEventStream(Guid aggregateRootId)
+    {
+        return Set<TEventEntity>()
+            .Where(e => e.AggregateRootId == aggregateRootId)
+            .AsEnumerable()
+            .Select(e => convertEntityToRecord(e))
+            .ToList();
+    }
+
+    void IEventStoreContext.AddEvents(IEnumerable<IEventStreamRecord> eventStream)
+    {
+        Set<TEventEntity>().AddRange(eventStream.Select(e => CreateNewEntity(e)));
         SaveChanges();
     }
 }
