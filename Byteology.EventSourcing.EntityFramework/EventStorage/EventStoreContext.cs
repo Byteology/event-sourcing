@@ -65,6 +65,7 @@ public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
         // The events are immutable so we are avoiding the overhead of setting up the change tracker.
         IQueryable<TEventEntity> entitites = Set<TEventEntity>()
             .Where(e => e.AggregateRootId == aggregateRootId)
+            .OrderBy(e => e.Sequence)
             .AsNoTracking();
 
         // By doing this we are streaming the events instead of loading them all into the memory.
