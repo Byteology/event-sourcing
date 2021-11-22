@@ -1,4 +1,4 @@
-﻿namespace Byteology.EventSourcing.EntityFramework;
+﻿namespace Byteology.EventSourcing.EntityFramework.EventStorage;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 // Entity Framework is oblivious of NRT

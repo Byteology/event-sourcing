@@ -1,4 +1,4 @@
-﻿namespace Byteology.EventSourcing.EntityFramework;
+﻿namespace Byteology.EventSourcing.EntityFramework.EventStorage;
 
 using Byteology.EventSourcing.EventHandling;
 using Byteology.EventSourcing.EventHandling.Storage;
