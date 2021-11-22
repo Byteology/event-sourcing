@@ -1,36 +1,22 @@
 ﻿namespace Byteology.EventSourcing.CommandHandling;
 
-using Byteology.EventSourcing.EventHandling;
+using Byteology.EventSourcing.EventHandling.Publishing;
+using Byteology.EventSourcing.EventHandling.Storage;
 
-public class DefaultCommandDispatcher : ICommandDispatcher
+public class DefaultCommandDispatcher : CommandDispatcherBase
 {
-    private readonly ICommandHandlerMap _commandHandlerMap;
-    private readonly Func<DateTimeOffset> _dateTimeProvider;
-    private readonly IEnumerable<IEventListener> _eventListeners;
+    private readonly IEventStore _eventStore;
+    private readonly IEventBus _eventBus;
 
     public DefaultCommandDispatcher(
-        ICommandHandlerMap commandHandlerMap,
-        Func<DateTimeOffset> dateTimeProvider,
-        IEnumerable<IEventListener> eventListeners)
+        IEventStore eventStore,
+        IEventBus eventBus,
+        Func<DateTimeOffset> dateTimeProvider) : base(dateTimeProvider)
     {
-        _commandHandlerMap = commandHandlerMap;
-        _dateTimeProvider = dateTimeProvider;
-        _eventListeners = eventListeners;
+        _eventStore = eventStore;
+        _eventBus = eventBus;
     }
 
-    public virtual void Dispatch<TCommand>(TCommand command)
-        where TCommand : ICommand
-    {
-        ICommandHandler<TCommand> handler = _commandHandlerMap.GetCommandHandler(command);
-
-        IEnumerable<IEventContext> eventStream = handler.HandleCommand(command, _dateTimeProvider());
-
-        foreach (IEventContext eventContext in eventStream)
-            foreach (IEventListener eventListener in _eventListeners)
-                try
-                {
-                    _ = eventListener.OnEventAsync(eventContext);
-                }
-                catch { /* We want to notify all listeners regardless of one failing. */ }
-    }
+    protected override ICommandHandler<TCommand> GetCommandHandler<TCommand>(TCommand command)
+        => new DefaultCommandHandler<TCommand>(_eventStore, _eventBus);
 }

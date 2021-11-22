@@ -1,7 +1,4 @@
-﻿namespace Byteology.EventSourcing;
-
-using Byteology.EventSourcing.EventHandling;
-using Byteology.EventSourcing.Storage;
+﻿namespace Byteology.EventSourcing.EventHandling.Storage;
 
 public class AggregateRootBuilder
 {
@@ -22,12 +19,12 @@ public class AggregateRootBuilder
         catch { /* Handled bellow */ }
 
         if (root == null)
-            throw new ArgumentException($"The type of the aggregate root should implement {typeof(IAggregateRoot).Name} and should have a public parameterless constructor.");
+            throw new ArgumentException($"The type of the aggregate root should implement '{typeof(IAggregateRoot).Name}' and should have a public parameterless constructor.");
 
         root.Id = id;
 
-        IEnumerable<IEventContext> eventStream = _eventStoreContext.GetEventStream(id);
-        foreach (IEventContext record in eventStream)
+        IEnumerable<IEventStreamRecord> eventStream = _eventStoreContext.GetEventStream(id);
+        foreach (IEventStreamRecord record in eventStream)
             root.ReplayEvent(record);
 
         return root;

@@ -1,17 +1,12 @@
 ﻿namespace Byteology.EventSourcing;
 
-using Byteology.EventSourcing.CommandHandling;
-using Byteology.EventSourcing.EventHandling;
+using Byteology.EventSourcing.EventHandling.Storage;
 
 public interface IAggregateRoot
 {
     Guid Id { get; set; }
 
-    void ExecuteCommand<TCommand>(TCommand command, DateTimeOffset timestamp)
-        where TCommand : ICommand;
+    void ReplayEvent(IEventStreamRecord @event);
 
-    void ReplayEvent(IEventContext eventContext);
-
-    IEnumerable<IEventContext> GetUncommitedEvents();
-    void MarkAllEventsAsCommited();
+    IEnumerable<IEventStreamRecord> GetNewEvents();
 }

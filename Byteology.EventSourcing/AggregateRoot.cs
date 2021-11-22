@@ -2,27 +2,28 @@
 
 using Byteology.EventSourcing.CommandHandling;
 using Byteology.EventSourcing.EventHandling;
-using Byteology.GuardClauses;
+using Byteology.EventSourcing.EventHandling.Storage;
 using System.Reflection;
 
 public abstract class AggregateRoot : IAggregateRoot
 {
-    private readonly IList<IEventContext> _uncommitedEvents = new List<IEventContext>();
+    private readonly IList<IEventStreamRecord> _newEvents = new List<IEventStreamRecord>();
 
     public Guid Id { get; private set; }
     public ulong Version { get; private set; }
 
-    protected void ApplyNewEvent<TEvent>(TEvent @event, DateTimeOffset commandTimestamp)
-        where TEvent : class
+    protected void ApplyNewEvent<TEvent, TCommand>(TEvent @event, CommandContext<TCommand> commandContext)
+        where TEvent : IEvent
+        where TCommand : ICommand
     {
-        applyEvent(commandTimestamp, Version + 1, @event, true);
+        applyEvent(commandContext.CommandTimestamp, Version + 1, @event, true);
     }
 
-    private void applyEvent(DateTimeOffset timestamp, ulong sequence, object @event, bool isNew)
+    private void applyEvent(DateTimeOffset timestamp, ulong sequence, IEvent @event, bool isNew)
     {
         Type eventType = @event.GetType();
         Type aggregateType = this.GetType();
-        Type contextType = typeof(EventContext<>).MakeGenericType(eventType);
+        Type contextType = typeof(EventHandlerContext<>).MakeGenericType(eventType);
         Type handlerType = typeof(IEventHandler<>).MakeGenericType(eventType);
         MethodInfo handlerMethod = handlerType.GetMethod(nameof(IEventHandler<IEvent>.HandleEvent))!;
 
@@ -30,45 +31,25 @@ public abstract class AggregateRoot : IAggregateRoot
             contextType,
             BindingFlags.NonPublic | BindingFlags.Instance,
             null,
-            new object[] { Id, aggregateType, timestamp, sequence, @event },
+            new object[] { timestamp, sequence, @event },
             null)!;
 
         if (aggregateType.IsAssignableTo(handlerType))
             handlerMethod.Invoke(this, new object[] { context });
         else 
-            throw new InvalidOperationException($"The aggregate root can't handle events of type {eventType.Name} as it does not implement the proper {typeof(IEventHandler<>).Name} interface.");
+            throw new InvalidOperationException($"The aggregate root can't handle the specified event as it does not implement the {handlerType} interface.");
 
         Version = sequence;
 
         if (isNew)
-            _uncommitedEvents.Add((context as IEventContext)!);
+            _newEvents.Add((context as IEventStreamRecord)!);
     }
 
     Guid IAggregateRoot.Id { get => Id; set => Id = value; }
 
-    void IAggregateRoot.ExecuteCommand<TCommand>(TCommand command, DateTimeOffset timestamp)
-    {
-        #pragma warning disable S3060 // "is" should not be used with "this" 
-        // This is fine since we are testing derived classes in external code.
-            if (this is ICommandable<TCommand> commandable)
-                commandable.Execute(command, timestamp);
-            else
-                throw new InvalidOperationException($"The aggregate root can't execute the specified command as it does not inherit the {typeof(ICommandable<TCommand>).Name} interface.");
-        #pragma warning restore S3060 // "is" should not be used with "this"
-    }
+    void IAggregateRoot.ReplayEvent(IEventStreamRecord @event) =>
+        applyEvent(@event.EventTimestamp, @event.EventSequence, @event.Event, false);
 
-    void IAggregateRoot.ReplayEvent(IEventContext eventContext)
-    {
-        Guard.Argument(eventContext, nameof(eventContext))
-            .Satisfies(x => x.AggregateId == Id && x.AggregateType == this.GetType(),
-                "Event should apply be for this aggregate root.")
-            .Satisfies(x => x.EventSequence > Version, "The events sequence should be higher than the aggregate root version.");
-
-        applyEvent(eventContext.Timestamp, eventContext.EventSequence, eventContext.Event, false);
-    }
-
-    IEnumerable<IEventContext> IAggregateRoot.GetUncommitedEvents() => _uncommitedEvents;
-
-    void IAggregateRoot.MarkAllEventsAsCommited() => _uncommitedEvents.Clear();
+    IEnumerable<IEventStreamRecord> IAggregateRoot.GetNewEvents() => _newEvents;
 }
 
