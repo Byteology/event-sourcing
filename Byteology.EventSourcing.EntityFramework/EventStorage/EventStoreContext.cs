@@ -59,12 +59,14 @@ public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
 
     IEnumerable<IEventStreamRecord> IEventStoreContext.GetEventStream(Guid aggregateRootId)
     {
-        return Set<TEventEntity>()
+        // The events are immutable so we are avoiding the overhead of setting up the change tracker.
+        IQueryable<TEventEntity> entitites = Set<TEventEntity>()
             .Where(e => e.AggregateRootId == aggregateRootId)
-            .AsNoTracking()
-            .AsEnumerable()
-            .Select(e => convertEntityToRecord(e))
-            .ToList();
+            .AsNoTracking();
+
+        // By doing this we are streaming the events instead of loading them all into the memory.
+        foreach (TEventEntity entity in entitites)
+            yield return convertEntityToRecord(entity);
     }
 
     void IEventStoreContext.AddEvents(IEnumerable<IEventStreamRecord> eventStream)
