@@ -61,6 +61,7 @@ public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
     {
         return Set<TEventEntity>()
             .Where(e => e.AggregateRootId == aggregateRootId)
+            .AsNoTracking()
             .AsEnumerable()
             .Select(e => convertEntityToRecord(e))
             .ToList();
