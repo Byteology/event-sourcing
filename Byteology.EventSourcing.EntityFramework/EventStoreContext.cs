@@ -3,6 +3,7 @@
 using Byteology.EventSourcing.EventHandling;
 using Byteology.EventSourcing.EventHandling.Storage;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
     where TEventEntity : class, IEventEntity, new()
@@ -20,12 +21,22 @@ public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<TEventEntity>()
+        EntityTypeBuilder<TEventEntity> entityTypeBuilder = modelBuilder.Entity<TEventEntity>();
+
+        entityTypeBuilder
             .HasKey(nameof(IEventEntity.Id));
 
-        modelBuilder.Entity<TEventEntity>()
+        entityTypeBuilder
             .HasIndex(nameof(IEventEntity.AggregateRootId), nameof(IEventEntity.Sequence))
             .IsUnique();
+
+        entityTypeBuilder
+            .Property(nameof(IEventEntity.Type))
+            .IsRequired();
+
+        entityTypeBuilder
+            .Property(nameof(IEventEntity.Payload))
+            .IsRequired();
     }
 
     protected virtual TEventEntity CreateNewEntity(IEventStreamRecord eventContext)
