@@ -27,6 +27,9 @@ public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
             .HasKey(nameof(IEventEntity.Id));
 
         entityTypeBuilder
+            .HasIndex(nameof(IEventEntity.AggregateRootId));
+
+        entityTypeBuilder
             .HasIndex(nameof(IEventEntity.AggregateRootId), nameof(IEventEntity.Sequence))
             .IsUnique();
 
