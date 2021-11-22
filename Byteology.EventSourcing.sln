@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".sonar", ".sonar", "{AF9A2B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Byteology.EventSourcing", "Byteology.EventSourcing\Byteology.EventSourcing.csproj", "{00E8D23A-6D75-44E7-83DC-ED4493CF5042}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Byteology.EventSourcing.EntityFramework", "Byteology.EventSourcing.EntityFramework\Byteology.EventSourcing.EntityFramework.csproj", "{636EE5B3-D62B-42F3-B21E-EF1584411454}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{00E8D23A-6D75-44E7-83DC-ED4493CF5042}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{00E8D23A-6D75-44E7-83DC-ED4493CF5042}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{00E8D23A-6D75-44E7-83DC-ED4493CF5042}.Release|Any CPU.Build.0 = Release|Any CPU
+		{636EE5B3-D62B-42F3-B21E-EF1584411454}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{636EE5B3-D62B-42F3-B21E-EF1584411454}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{636EE5B3-D62B-42F3-B21E-EF1584411454}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{636EE5B3-D62B-42F3-B21E-EF1584411454}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
