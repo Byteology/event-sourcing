@@ -20,9 +20,7 @@ public class DefaultCommandHandler<TCommand> : ICommandHandler<TCommand>
     {
         OnBeforeHandling(context);
 
-        using IEventStoreContext eventStoreContext = _eventStore.CreateContext();
-
-        AggregateRootBuilder rootBuilder = new(eventStoreContext);
+        AggregateRootBuilder rootBuilder = new(_eventStore);
         IAggregateRoot aggregateRoot = rootBuilder.Build(context.Command.AggregateRootId, context.Command.AggregateType);
         OnAggregateRootBuilt(context, aggregateRoot);
 
@@ -35,7 +33,7 @@ public class DefaultCommandHandler<TCommand> : ICommandHandler<TCommand>
             throw new InvalidOperationException($"The aggregate root can't execute the specified command as it does not inherit the {typeof(ICommandHandler<TCommand>)} interface.");
 
         IEnumerable<IEventStreamRecord> eventStream = aggregateRoot.GetNewEvents();
-        eventStoreContext.AddEvents(eventStream);
+        _eventStore.AddEvents(eventStream);
         OnEventsPersisted(context, eventStream);
 
         foreach (IEventStreamRecord eventRecord in eventStream)

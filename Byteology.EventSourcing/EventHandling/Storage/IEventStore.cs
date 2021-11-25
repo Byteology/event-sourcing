@@ -2,5 +2,6 @@
 
 public interface IEventStore
 {
-    IEventStoreContext CreateContext();
+    IEnumerable<IEventStreamRecord> GetEventStream(Guid aggregateRootId);
+    void AddEvents(IEnumerable<IEventStreamRecord> eventStream);
 }
