@@ -2,11 +2,11 @@
 
 public class AggregateRootBuilder
 {
-    private readonly IEventStoreContext _eventStoreContext;
+    private readonly IEventStore _eventStore;
 
-    public AggregateRootBuilder(IEventStoreContext eventStoreContext)
+    public AggregateRootBuilder(IEventStore eventStore)
     {
-        _eventStoreContext = eventStoreContext;
+        _eventStore = eventStore;
     }
 
     public IAggregateRoot Build(Guid id, Type type)
@@ -23,7 +23,7 @@ public class AggregateRootBuilder
 
         root.Id = id;
 
-        IEnumerable<IEventStreamRecord> eventStream = _eventStoreContext.GetEventStream(id);
+        IEnumerable<IEventStreamRecord> eventStream = _eventStore.GetEventStream(id);
         foreach (IEventStreamRecord record in eventStream)
             root.ReplayEvent(record);
 

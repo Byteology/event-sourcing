@@ -5,12 +5,12 @@ using Byteology.EventSourcing.EventHandling.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
+public abstract class EventStoreBase<TEventEntity> : DbContext, IEventStore
     where TEventEntity : class, IEventEntity, new()
 {
     private readonly SerializationRegistry<IEvent> _eventSerializationRegistry;
 
-    public EventStoreContext(
+    protected EventStoreBase(
         DbContextOptions dbOptions,
         SerializationRegistry<IEvent> eventSerializationRegistry) : base(dbOptions) 
     {
@@ -60,7 +60,7 @@ public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
         return record;
     }
 
-    IEnumerable<IEventStreamRecord> IEventStoreContext.GetEventStream(Guid aggregateRootId)
+    IEnumerable<IEventStreamRecord> IEventStore.GetEventStream(Guid aggregateRootId)
     {
         // The events are immutable so we are avoiding the overhead of setting up the change tracker.
         IQueryable<TEventEntity> entitites = Set<TEventEntity>()
@@ -73,9 +73,16 @@ public class EventStoreContext<TEventEntity> : DbContext, IEventStoreContext
             yield return convertEntityToRecord(entity);
     }
 
-    void IEventStoreContext.AddEvents(IEnumerable<IEventStreamRecord> eventStream)
+    void IEventStore.AddEvents(IEnumerable<IEventStreamRecord> eventStream)
     {
-        Set<TEventEntity>().AddRange(eventStream.Select(e => CreateNewEntity(e)));
-        SaveChanges();
+        try
+        {
+            Set<TEventEntity>().AddRange(eventStream.Select(e => CreateNewEntity(e)));
+            SaveChanges();
+        }
+        finally
+        {
+            ChangeTracker.Clear();
+        }
     }
 }
