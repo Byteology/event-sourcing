@@ -1,12 +1,16 @@
 ﻿namespace Byteology.EventSourcing;
 
-using Byteology.EventSourcing.EventHandling.Storage;
+using Byteology.EventSourcing.CommandHandling;
+using Byteology.EventSourcing.Storage;
 
 public interface IAggregateRoot
 {
     Guid Id { get; set; }
+    ulong Version { get; }
 
-    void ReplayEvent(IEventStreamRecord @event);
+    IEnumerable<IEvent> GetUncommitedEvents();
+    void MarkAllEventsAsCommited();
 
-    IEnumerable<IEventStreamRecord> GetNewEvents();
+    void ExecuteCommand(ICommand command, CommandMetadata metadata);
+    void ReplayEvent(PersistedEventRecord record);
 }

@@ -1,4 +1,6 @@
-﻿namespace Byteology.EventSourcing.CommandHandling;
+﻿namespace Byteology.EventSourcing.CommandHandling.Dispatchers;
+
+using Byteology.EventSourcing.CommandHandling;
 
 public interface ICommandDispatcher
 {

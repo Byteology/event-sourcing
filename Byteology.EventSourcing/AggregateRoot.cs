@@ -1,55 +1,51 @@
 ﻿namespace Byteology.EventSourcing;
 
 using Byteology.EventSourcing.CommandHandling;
-using Byteology.EventSourcing.EventHandling;
-using Byteology.EventSourcing.EventHandling.Storage;
-using System.Reflection;
+using Byteology.EventSourcing.Storage;
 
 public abstract class AggregateRoot : IAggregateRoot
 {
-    private readonly IList<IEventStreamRecord> _newEvents = new List<IEventStreamRecord>();
+    private readonly List<IEvent> _newEvents = new();
 
     public Guid Id { get; private set; }
     public ulong Version { get; private set; }
 
-    protected void ApplyNewEvent<TEvent, TCommand>(TEvent @event, CommandContext<TCommand> commandContext)
-        where TEvent : IEvent
-        where TCommand : ICommand
+    protected abstract void ExecuteCommand(ICommand command, CommandMetadata metadata);
+
+    protected abstract void HandleEvent(IEvent @event);
+
+    protected void ApplyNewEvent(IEvent @event)
     {
-        applyEvent(commandContext.CommandTimestamp, Version + 1, @event, true);
+        HandleEvent(@event);
+        Version++;
+        _newEvents.Add(@event);
     }
 
-    private void applyEvent(DateTimeOffset timestamp, ulong sequence, IEvent @event, bool isNew)
-    {
-        Type eventType = @event.GetType();
-        Type aggregateType = this.GetType();
-        Type contextType = typeof(EventHandlerContext<>).MakeGenericType(eventType);
-        Type handlerType = typeof(IEventHandler<>).MakeGenericType(eventType);
-        MethodInfo handlerMethod = handlerType.GetMethod(nameof(IEventHandler<IEvent>.HandleEvent))!;
-
-        object context = Activator.CreateInstance(
-            contextType,
-            BindingFlags.NonPublic | BindingFlags.Instance,
-            null,
-            new object[] { Id, timestamp, sequence, @event },
-            null)!;
-
-        if (aggregateType.IsAssignableTo(handlerType))
-            handlerMethod.Invoke(this, new object[] { context });
-        else 
-            throw new InvalidOperationException($"The aggregate root can't handle the specified event as it does not implement the {handlerType} interface.");
-
-        Version = sequence;
-
-        if (isNew)
-            _newEvents.Add((context as IEventStreamRecord)!);
-    }
+    #region IAggregateRoot Support
 
     Guid IAggregateRoot.Id { get => Id; set => Id = value; }
+    ulong IAggregateRoot.Version => Version;
 
-    void IAggregateRoot.ReplayEvent(IEventStreamRecord @event) =>
-        applyEvent(@event.EventTimestamp, @event.EventSequence, @event.Event, false);
+    IEnumerable<IEvent> IAggregateRoot.GetUncommitedEvents() => _newEvents;
 
-    IEnumerable<IEventStreamRecord> IAggregateRoot.GetNewEvents() => _newEvents;
+    void IAggregateRoot.MarkAllEventsAsCommited() => _newEvents.Clear();
+
+    void IAggregateRoot.ExecuteCommand(ICommand command, CommandMetadata metadata) 
+        => ExecuteCommand(command, metadata);
+
+    void IAggregateRoot.ReplayEvent(PersistedEventRecord record)
+    {
+        if (record.Metadata.AggregateRootType != this.GetType() || record.Metadata.AggregateRootId != Id)
+            throw new ArgumentException("The specified event is meant for another aggregate root.");
+
+        if (record.Metadata.EventStreamPosition <= Version)
+            throw new ArgumentException("The specified event is in an already processed position in the event stream.");
+
+        HandleEvent(record.Event);
+        Version = record.Metadata.EventStreamPosition;
+    }
+
+    #endregion
 }
+
 
