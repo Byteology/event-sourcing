@@ -1,7 +1,7 @@
 ﻿namespace Byteology.EventSourcing.CommandHandling;
 
-public interface ICommandHandler<TCommand>
+public interface ICommandHandler<in TCommand>
     where TCommand : ICommand
 {
-    void HandleCommand(CommandContext<TCommand> context);
+    void HandleCommand(TCommand command, CommandMetadata metadata);
 }
