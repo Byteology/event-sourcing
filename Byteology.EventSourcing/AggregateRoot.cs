@@ -1,6 +1,5 @@
 ﻿namespace Byteology.EventSourcing;
 
-using Byteology.EventSourcing.CommandHandling;
 using Byteology.EventSourcing.Storage;
 
 public abstract class AggregateRoot : IAggregateRoot
@@ -9,8 +8,6 @@ public abstract class AggregateRoot : IAggregateRoot
 
     public Guid Id { get; private set; }
     public ulong Version { get; private set; }
-
-    protected abstract void ExecuteCommand(ICommand command, CommandMetadata metadata);
 
     protected abstract void HandleEvent(IEvent @event);
 
@@ -29,9 +26,6 @@ public abstract class AggregateRoot : IAggregateRoot
     IEnumerable<IEvent> IAggregateRoot.GetUncommitedEvents() => _newEvents;
 
     void IAggregateRoot.MarkAllEventsAsCommited() => _newEvents.Clear();
-
-    void IAggregateRoot.ExecuteCommand(ICommand command, CommandMetadata metadata) 
-        => ExecuteCommand(command, metadata);
 
     void IAggregateRoot.ReplayEvent(PersistedEventRecord record)
     {

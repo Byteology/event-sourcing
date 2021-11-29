@@ -1,4 +1,4 @@
-﻿namespace Byteology.EventSourcing.CommandHandling;
+﻿namespace Byteology.EventSourcing.Commandment.Handlers;
 
 public interface ICommandHandler<in TCommand>
     where TCommand : ICommand

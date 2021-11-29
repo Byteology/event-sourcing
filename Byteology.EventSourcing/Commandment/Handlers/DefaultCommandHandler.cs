@@ -1,4 +1,4 @@
-﻿namespace Byteology.EventSourcing.CommandHandling;
+﻿namespace Byteology.EventSourcing.Commandment.Handlers;
 
 using Byteology.EventSourcing.Storage;
 
@@ -15,11 +15,15 @@ public class DefaultCommandHandler<TCommand> : ICommandHandler<TCommand>
     public virtual void HandleCommand(TCommand command, CommandMetadata metadata)
     {
         IAggregateRoot aggregateRoot = BuildAggregateRoot(command.AggregateRootId, command.AggregateRootType);
-        aggregateRoot.ExecuteCommand(command, metadata);
+
+        if (aggregateRoot is ICommandHandler<TCommand> asCommandHandler)
+            asCommandHandler.HandleCommand(command, metadata);
+        else
+            throw new InvalidOperationException($"The specified aggregate can't handle the command because it does not implement the {typeof(ICommandHandler<TCommand>)} interface.");
 
         IEnumerable<IEvent> newEvents = aggregateRoot.GetUncommitedEvents();
         if (!newEvents.Any())
-            throw new InvalidOperationException("The command was not executed as the aggregate root failed to apply any new events.");
+            throw new InvalidOperationException("The command was not executed because the aggregate root failed to apply any new events.");
 
         PersistNewEvents(aggregateRoot, metadata);
     }

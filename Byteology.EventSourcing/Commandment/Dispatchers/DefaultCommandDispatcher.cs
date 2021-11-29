@@ -1,5 +1,6 @@
-﻿namespace Byteology.EventSourcing.CommandHandling.Dispatchers;
+﻿namespace Byteology.EventSourcing.Commandment.Dispatchers;
 
+using Byteology.EventSourcing.Commandment.Handlers;
 using Byteology.EventSourcing.Storage;
 
 public class DefaultCommandDispatcher : CommandDispatcherBase
