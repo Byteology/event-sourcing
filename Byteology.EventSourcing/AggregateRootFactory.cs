@@ -1,7 +1,5 @@
 ﻿namespace Byteology.EventSourcing;
 
-using Byteology.EventSourcing.Storage;
-
 public class AggregateRootFactory
 {
     private readonly IEventStore _eventStore;

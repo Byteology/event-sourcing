@@ -1,4 +1,4 @@
-﻿namespace Byteology.EventSourcing.Storage;
+﻿namespace Byteology.EventSourcing;
 
 public interface IPersistedEventMetadata : IEventMetadata
 {

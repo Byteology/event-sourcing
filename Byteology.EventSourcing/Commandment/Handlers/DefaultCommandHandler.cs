@@ -1,7 +1,5 @@
 ﻿namespace Byteology.EventSourcing.Commandment.Handlers;
 
-using Byteology.EventSourcing.Storage;
-
 public class DefaultCommandHandler<TCommand> : ICommandHandler<TCommand>
     where TCommand : ICommand
 {

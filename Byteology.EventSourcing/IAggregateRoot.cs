@@ -1,7 +1,5 @@
 ﻿namespace Byteology.EventSourcing;
 
-using Byteology.EventSourcing.Storage;
-
 public interface IAggregateRoot
 {
     Guid Id { get; set; }

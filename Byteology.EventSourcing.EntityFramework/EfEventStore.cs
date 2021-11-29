@@ -1,7 +1,6 @@
 ﻿namespace Byteology.EventSourcing.EntityFramework;
 
 using Byteology.EventSourcing.Configuration;
-using Byteology.EventSourcing.Storage;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 

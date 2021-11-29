@@ -1,7 +1,5 @@
 ﻿namespace Byteology.EventSourcing;
 
-using Byteology.EventSourcing.Storage;
-
 public abstract class AggregateRoot : IAggregateRoot
 {
     private readonly List<IEvent> _newEvents = new();
