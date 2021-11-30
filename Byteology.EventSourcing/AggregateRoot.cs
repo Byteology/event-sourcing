@@ -1,5 +1,7 @@
 ﻿namespace Byteology.EventSourcing;
 
+using Byteology.EventSourcing.EventStorage;
+
 public abstract class AggregateRoot : IAggregateRoot
 {
     private readonly List<IEvent> _newEvents = new();
@@ -7,19 +9,16 @@ public abstract class AggregateRoot : IAggregateRoot
     public Guid Id { get; private set; }
     public ulong Version { get; private set; }
 
-    protected abstract void HandleEvent(IEvent @event);
-
-    protected void ApplyNewEvent(IEvent @event)
+    public void ApplyNewEvent(IEvent @event)
     {
         HandleEvent(@event);
         Version++;
         _newEvents.Add(@event);
     }
 
-    #region IAggregateRoot Support
+    protected abstract void HandleEvent(IEvent @event);
 
     Guid IAggregateRoot.Id { get => Id; set => Id = value; }
-    ulong IAggregateRoot.Version => Version;
 
     IEnumerable<IEvent> IAggregateRoot.GetUncommitedEvents() => _newEvents;
 
@@ -36,8 +35,6 @@ public abstract class AggregateRoot : IAggregateRoot
         HandleEvent(record.Event);
         Version = record.Metadata.EventStreamPosition;
     }
-
-    #endregion
 }
 
 

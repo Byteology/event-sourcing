@@ -1,6 +1,7 @@
 ﻿namespace Byteology.EventSourcing.EntityFramework;
 
 using Byteology.EventSourcing.Configuration;
+using Byteology.EventSourcing.EventStorage;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -97,10 +98,8 @@ public class EfEventStore : DbContext, IEventStore
         Type eventType = _eventTypesRegistry.GetTypeByName(entity.Type);
         IEvent @event = (JsonSerializer.Deserialize(entity.Payload, eventType) as IEvent)!;
 
-        Metadata metadata = new(entity.Id, entity.AggregateRootId, _aggregateRootTypesRegistry.GetTypeByName(entity.AggregateRootType), entity.StreamPosition, entity.Timestamp, entity.Issuer, entity.TransactionId);
+        PersistedEventMetadata metadata = new(entity.Id, entity.AggregateRootId, _aggregateRootTypesRegistry.GetTypeByName(entity.AggregateRootType), entity.StreamPosition, entity.Timestamp, entity.Issuer, entity.TransactionId);
 
         return new PersistedEventRecord(@event, metadata);
     }
-
-    private sealed record Metadata(ulong GlobalEventStreamPosition, Guid AggregateRootId, Type AggregateRootType, ulong EventStreamPosition, DateTimeOffset Timestamp, string ? Issuer, Guid TransactionId) : IPersistedEventMetadata;
 }

@@ -1,9 +1,13 @@
 ﻿namespace Byteology.EventSourcing;
 
+using Byteology.EventSourcing.EventStorage;
+
 public interface IAggregateRoot
 {
     Guid Id { get; set; }
     ulong Version { get; }
+
+    void ApplyNewEvent(IEvent @event);
 
     IEnumerable<IEvent> GetUncommitedEvents();
     void MarkAllEventsAsCommited();

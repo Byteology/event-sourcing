@@ -1,4 +1,4 @@
-﻿namespace Byteology.EventSourcing;
+﻿namespace Byteology.EventSourcing.EventStorage;
 
 public interface IEventStore
 {

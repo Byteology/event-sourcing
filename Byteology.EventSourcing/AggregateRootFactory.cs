@@ -1,5 +1,7 @@
 ﻿namespace Byteology.EventSourcing;
 
+using Byteology.EventSourcing.EventStorage;
+
 public class AggregateRootFactory
 {
     private readonly IEventStore _eventStore;
@@ -9,18 +11,10 @@ public class AggregateRootFactory
         _eventStore = eventStore;
     }
 
-    public IAggregateRoot Build(Guid id, Type type)
+    public TAggregateRoot Build<TAggregateRoot>(Guid id)
+        where TAggregateRoot : IAggregateRoot, new()
     {
-        IAggregateRoot? root = null;
-        try
-        {
-            root = Activator.CreateInstance(type) as IAggregateRoot;
-        }
-        catch { /* Handled bellow */ }
-
-        if (root == null)
-            throw new ArgumentException($"The type of the aggregate root should implement '{typeof(IAggregateRoot)}' and should have a public parameterless constructor.");
-
+        TAggregateRoot root = new();
         root.Id = id;
 
         IEnumerable<PersistedEventRecord> eventStream = _eventStore.GetEventStream(id);
@@ -29,11 +23,4 @@ public class AggregateRootFactory
 
         return root;
     }
-
-    public TAggregateRoot Build<TAggregateRoot>(Guid id)
-        where TAggregateRoot : IAggregateRoot, new()
-    {
-        return (TAggregateRoot)Build(id, typeof(TAggregateRoot));
-    }
-
 }

@@ -1,3 +1,3 @@
-﻿namespace Byteology.EventSourcing.Commandment;
+﻿namespace Byteology.EventSourcing.CommandHandling;
 
 public record CommandMetadata(string? Issuer, DateTimeOffset Timestamp);

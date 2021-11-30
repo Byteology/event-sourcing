@@ -1,0 +1,8 @@
+﻿namespace Byteology.EventSourcing.CommandHandling;
+
+public interface ICommandHandler<TCommand, TAggregateRoot>
+    where TCommand : ICommand<TAggregateRoot>
+    where TAggregateRoot : IAggregateRoot, new()
+{
+    void HandleCommand(TCommand command, CommandMetadata metadata);
+}
