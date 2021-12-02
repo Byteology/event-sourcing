@@ -6,19 +6,19 @@ public abstract class AggregateRoot : IAggregateRoot
 {
     private readonly List<IEvent> _newEvents = new();
 
-    public Guid Id { get; private set; }
-    public ulong Version { get; private set; }
+    public Guid EventStreamId { get; private set; }
+    public ulong EventStreamPosition { get; private set; }
 
     public void ApplyNewEvent(IEvent @event)
     {
         HandleEvent(@event);
-        Version++;
+        EventStreamPosition++;
         _newEvents.Add(@event);
     }
 
     protected abstract void HandleEvent(IEvent @event);
 
-    Guid IAggregateRoot.Id { get => Id; set => Id = value; }
+    Guid IAggregateRoot.EventStreamId { get => EventStreamId; set => EventStreamId = value; }
 
     IEnumerable<IEvent> IAggregateRoot.GetUncommitedEvents() => _newEvents;
 
@@ -26,14 +26,14 @@ public abstract class AggregateRoot : IAggregateRoot
 
     void IAggregateRoot.ReplayEvent(PersistedEventRecord record)
     {
-        if (record.Metadata.AggregateRootType != this.GetType() || record.Metadata.AggregateRootId != Id)
+        if (record.Metadata.AggregateRootType != this.GetType() || record.Metadata.EventStreamId != EventStreamId)
             throw new ArgumentException("The specified event is meant for another aggregate root.");
 
-        if (record.Metadata.EventStreamPosition <= Version)
+        if (record.Metadata.EventStreamPosition <= EventStreamPosition)
             throw new ArgumentException("The specified event is in an already processed position in the event stream.");
 
         HandleEvent(record.Event);
-        Version = record.Metadata.EventStreamPosition;
+        EventStreamPosition = record.Metadata.EventStreamPosition;
     }
 }
 

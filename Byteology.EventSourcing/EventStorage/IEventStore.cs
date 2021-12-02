@@ -2,6 +2,6 @@
 
 public interface IEventStore
 {
-    IEnumerable<PersistedEventRecord> GetEventStream(Guid aggregateRootId);
+    IEnumerable<PersistedEventRecord> GetEventStream(Guid id);
     void AddEvents(IEnumerable<EventRecord> events);
 }

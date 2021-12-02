@@ -15,10 +15,10 @@ public abstract class CommandHandler<TCommand, TAggregateRoot> : ICommandHandler
 
     protected abstract void ExecuteCommand(TCommand command, CommandMetadata metadata, TAggregateRoot aggregateRoot);
 
-    protected virtual TAggregateRoot BuildAggregateRoot(Guid id)
+    protected virtual TAggregateRoot BuildAggregateRoot(Guid eventStreamId)
     {
         AggregateRootFactory builder = new(_eventStore);
-        TAggregateRoot root = builder.Build<TAggregateRoot>(id);
+        TAggregateRoot root = builder.Build<TAggregateRoot>(eventStreamId);
         return root;
     }
 
@@ -28,13 +28,13 @@ public abstract class CommandHandler<TCommand, TAggregateRoot> : ICommandHandler
 
         IEnumerable<IEvent> newEvents = aggregateRoot.GetUncommitedEvents();
 
-        ulong nextEventPosition = aggregateRoot.Version - (ulong)newEvents.Count() + 1;
+        ulong nextEventPosition = aggregateRoot.EventStreamPosition - (ulong)newEvents.Count() + 1;
 
         IEnumerable<EventRecord> eventRecords = newEvents.Select(e =>
             new EventRecord(
                 e,
                 new EventMetadata(
-                    aggregateRoot.Id,
+                    aggregateRoot.EventStreamId,
                     aggregateRoot.GetType(),
                     nextEventPosition++,
                     commandMetadata.Timestamp,
@@ -50,7 +50,7 @@ public abstract class CommandHandler<TCommand, TAggregateRoot> : ICommandHandler
 
     void ICommandHandler<TCommand, TAggregateRoot>.HandleCommand(TCommand command, CommandMetadata metadata)
     {
-        TAggregateRoot aggregateRoot = BuildAggregateRoot(command.AggregateRootId);
+        TAggregateRoot aggregateRoot = BuildAggregateRoot(command.EventStreamId);
 
         ExecuteCommand(command, metadata, aggregateRoot);
 

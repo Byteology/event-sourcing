@@ -11,13 +11,13 @@ public class AggregateRootFactory
         _eventStore = eventStore;
     }
 
-    public TAggregateRoot Build<TAggregateRoot>(Guid id)
+    public TAggregateRoot Build<TAggregateRoot>(Guid eventStreamId)
         where TAggregateRoot : IAggregateRoot, new()
     {
         TAggregateRoot root = new();
-        root.Id = id;
+        root.EventStreamId = eventStreamId;
 
-        IEnumerable<PersistedEventRecord> eventStream = _eventStore.GetEventStream(id);
+        IEnumerable<PersistedEventRecord> eventStream = _eventStore.GetEventStream(eventStreamId);
         foreach (PersistedEventRecord record in eventStream)
             root.ReplayEvent(record);
 

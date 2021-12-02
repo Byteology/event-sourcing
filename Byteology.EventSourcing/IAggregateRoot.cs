@@ -4,8 +4,8 @@ using Byteology.EventSourcing.EventStorage;
 
 public interface IAggregateRoot
 {
-    Guid Id { get; set; }
-    ulong Version { get; }
+    Guid EventStreamId { get; set; }
+    ulong EventStreamPosition { get; }
 
     void ApplyNewEvent(IEvent @event);
 

@@ -29,13 +29,13 @@ public class EfEventStore : DbContext, IEventStore
         modelBuilder.Entity<Event>(builder =>
         {
             builder
-                .HasKey(nameof(Event.Id));
+                .HasKey(nameof(Event.GlobalStreamPosition));
 
             builder
-                .HasIndex(nameof(Event.AggregateRootId));
+                .HasIndex(nameof(Event.StreamId));
 
             builder
-                .HasIndex(nameof(Event.AggregateRootId), nameof(Event.StreamPosition))
+                .HasIndex(nameof(Event.StreamId), nameof(Event.StreamPosition))
                 .IsUnique();
 
             builder
@@ -65,11 +65,11 @@ public class EfEventStore : DbContext, IEventStore
         }
     }
 
-    public IEnumerable<PersistedEventRecord> GetEventStream(Guid aggregateRootId)
+    public IEnumerable<PersistedEventRecord> GetEventStream(Guid id)
     {
         // The events are immutable so we are avoiding the overhead of setting up the change tracker.
         IQueryable<Event> entitites = Set<Event>()
-            .Where(e => e.AggregateRootId == aggregateRootId)
+            .Where(e => e.StreamId == id)
             .OrderBy(e => e.StreamPosition)
             .AsNoTracking();
 
@@ -82,7 +82,7 @@ public class EfEventStore : DbContext, IEventStore
     {
         return new Event()
         {
-            AggregateRootId = record.Metadata.AggregateRootId,
+            StreamId = record.Metadata.EventStreamId,
             AggregateRootType = _aggregateRootTypesRegistry.GetTypeName(record.Metadata.AggregateRootType),
             Issuer = record.Metadata.Issuer,
             Payload = JsonSerializer.Serialize(record.Event, _serializerOptions),
@@ -98,7 +98,7 @@ public class EfEventStore : DbContext, IEventStore
         Type eventType = _eventTypesRegistry.GetTypeByName(entity.Type);
         IEvent @event = (JsonSerializer.Deserialize(entity.Payload, eventType) as IEvent)!;
 
-        PersistedEventMetadata metadata = new(entity.Id, entity.AggregateRootId, _aggregateRootTypesRegistry.GetTypeByName(entity.AggregateRootType), entity.StreamPosition, entity.Timestamp, entity.Issuer, entity.TransactionId);
+        PersistedEventMetadata metadata = new(entity.StreamId, _aggregateRootTypesRegistry.GetTypeByName(entity.AggregateRootType), entity.StreamPosition, entity.Timestamp, entity.Issuer, entity.TransactionId, entity.GlobalStreamPosition);
 
         return new PersistedEventRecord(@event, metadata);
     }

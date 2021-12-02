@@ -3,5 +3,5 @@
 public interface ICommand<TAggregateRoot>
     where TAggregateRoot : IAggregateRoot, new()
 {
-    Guid AggregateRootId { get; }
+    Guid EventStreamId { get; }
 }

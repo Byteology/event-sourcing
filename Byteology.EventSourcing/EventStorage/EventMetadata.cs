@@ -1,7 +1,7 @@
 ﻿namespace Byteology.EventSourcing.EventStorage;
 
 public record EventMetadata(
-    Guid AggregateRootId,
+    Guid EventStreamId,
     Type AggregateRootType,
     ulong EventStreamPosition,
     DateTimeOffset Timestamp,
