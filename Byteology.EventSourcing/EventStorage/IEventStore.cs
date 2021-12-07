@@ -3,5 +3,5 @@
 public interface IEventStore
 {
     IEnumerable<EventRecord> GetEventStream(Guid id);
-    void AddEvents(IEnumerable<EventRecord> events);
+    IEnumerable<EventRecord> AddEvents(IEnumerable<EventRecord> events);
 }

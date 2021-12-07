@@ -52,7 +52,7 @@ public class EfEventStore : DbContext, IEventStore
         });
     }
 
-    public void AddEvents(IEnumerable<EventRecord> events)
+    public IEnumerable<EventRecord> AddEvents(IEnumerable<EventRecord> events)
     {
         try
         {
@@ -63,6 +63,8 @@ public class EfEventStore : DbContext, IEventStore
         {
             ChangeTracker.Clear();
         }
+
+        return events;
     }
 
     public IEnumerable<EventRecord> GetEventStream(Guid id)
