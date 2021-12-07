@@ -5,7 +5,8 @@
 
 internal class Event
 {
-    public ulong GlobalStreamPosition { get; set; }
+    public Guid Id { get; set; }
+
     public Guid StreamId { get; set; }
     public string AggregateRootType { get; set; }
     public ulong StreamPosition { get; set; }

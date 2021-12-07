@@ -17,8 +17,8 @@ public class AggregateRootFactory
         TAggregateRoot root = new();
         root.EventStreamId = eventStreamId;
 
-        IEnumerable<PersistedEventRecord> eventStream = _eventStore.GetEventStream(eventStreamId);
-        foreach (PersistedEventRecord record in eventStream)
+        IEnumerable<EventRecord> eventStream = _eventStore.GetEventStream(eventStreamId);
+        foreach (EventRecord record in eventStream)
             root.ReplayEvent(record);
 
         return root;

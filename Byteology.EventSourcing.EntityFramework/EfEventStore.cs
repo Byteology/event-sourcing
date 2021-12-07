@@ -29,7 +29,7 @@ public class EfEventStore : DbContext, IEventStore
         modelBuilder.Entity<Event>(builder =>
         {
             builder
-                .HasKey(nameof(Event.GlobalStreamPosition));
+                .HasKey(nameof(Event.Id));
 
             builder
                 .HasIndex(nameof(Event.StreamId));
@@ -65,7 +65,7 @@ public class EfEventStore : DbContext, IEventStore
         }
     }
 
-    public IEnumerable<PersistedEventRecord> GetEventStream(Guid id)
+    public IEnumerable<EventRecord> GetEventStream(Guid id)
     {
         // The events are immutable so we are avoiding the overhead of setting up the change tracker.
         IQueryable<Event> entitites = Set<Event>()
@@ -93,13 +93,13 @@ public class EfEventStore : DbContext, IEventStore
         };
     }
 
-    private PersistedEventRecord convertEntityToRecord(Event entity)
+    private EventRecord convertEntityToRecord(Event entity)
     {
         Type eventType = _eventTypesRegistry.GetTypeByName(entity.Type);
         IEvent @event = (JsonSerializer.Deserialize(entity.Payload, eventType) as IEvent)!;
 
-        PersistedEventMetadata metadata = new(entity.StreamId, _aggregateRootTypesRegistry.GetTypeByName(entity.AggregateRootType), entity.StreamPosition, entity.Timestamp, entity.Issuer, entity.TransactionId, entity.GlobalStreamPosition);
+        EventMetadata metadata = new(entity.StreamId, _aggregateRootTypesRegistry.GetTypeByName(entity.AggregateRootType), entity.StreamPosition, entity.Timestamp, entity.Issuer, entity.TransactionId);
 
-        return new PersistedEventRecord(@event, metadata);
+        return new EventRecord(@event, metadata);
     }
 }
