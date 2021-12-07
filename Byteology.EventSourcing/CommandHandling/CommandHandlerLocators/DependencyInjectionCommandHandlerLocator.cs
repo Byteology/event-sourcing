@@ -2,7 +2,7 @@
 
 using Microsoft.Extensions.DependencyInjection;
 
-internal class DependencyInjectionCommandhandlerLocator : ICommandHandlerLocator
+public class DependencyInjectionCommandhandlerLocator : ICommandHandlerLocator
 {
     private readonly IServiceProvider _serviceProvider;
 
