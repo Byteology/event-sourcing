@@ -1,4 +1,4 @@
-﻿namespace Byteology.EventSourcing.EventStorage;
+﻿namespace Byteology.EventSourcing;
 
 public record EventMetadata(
     Guid EventStreamId,
