@@ -9,27 +9,38 @@ public class EventPublisher : IEventPublisher
 
     public void PublishEvents(IEnumerable<EventRecord> events)
     {
+        asyncPublish(events);
+        syncPublish(events);
+    }
+
+    public void RegisterEventSubsriber(IEventSubscriber subscriber, bool @async = true)
+    { 
+        if (async)
+            _asyncEventSubscribers.Add(subscriber);
+        else
+            _syncEventSubscribers.Remove(subscriber);
+    }
+
+    private void asyncPublish(IEnumerable<EventRecord> events)
+    {
         foreach (IEventSubscriber subscriber in _asyncEventSubscribers)
             foreach (EventRecord record in events)
                 _ = subscriber.OnEventAsync(record.Event, record.Metadata);
-
-        synchronousPublish(events);
     }
 
-    public void RegisterAsynchronousEventSubsriber(IEventSubscriber subscriber)
-        => _asyncEventSubscribers.Add(subscriber);
-
-    public void RegisterSynchronousEventSubsriber(IEventSubscriber subscriber)
-        => _syncEventSubscribers.Add(subscriber);
-
-    private void synchronousPublish(IEnumerable<EventRecord> events)
+    private void syncPublish(IEnumerable<EventRecord> events)
     {
         List<Task> tasks = new();
 
-        foreach (IEventSubscriber subscriber in _asyncEventSubscribers)
-            foreach (EventRecord record in events)
-                tasks.Add(subscriber.OnEventAsync(record.Event, record.Metadata));
+        foreach (IEventSubscriber subscriber in _syncEventSubscribers)
+            tasks.Add(syncSubscriberPublish(subscriber, events));
 
         Task.WhenAll(tasks).Wait();
+    }
+
+    private static async Task syncSubscriberPublish(IEventSubscriber subscriber, IEnumerable<EventRecord> events)
+    {
+        foreach (EventRecord record in events)
+            await subscriber.OnEventAsync(record.Event, record.Metadata).ConfigureAwait(false);
     }
 }

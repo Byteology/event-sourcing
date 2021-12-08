@@ -6,6 +6,5 @@ public interface IEventPublisher
 {
     void PublishEvents(IEnumerable<EventRecord> events);
 
-    void RegisterSynchronousEventSubsriber(IEventSubscriber subscriber);
-    void RegisterAsynchronousEventSubsriber(IEventSubscriber subscriber);
+    void RegisterEventSubsriber(IEventSubscriber subscriber, bool @async = true);
 }
