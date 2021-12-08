@@ -18,7 +18,7 @@ public class EventPublisher : IEventPublisher
         if (async)
             _asyncEventSubscribers.Add(subscriber);
         else
-            _syncEventSubscribers.Remove(subscriber);
+            _syncEventSubscribers.Add(subscriber);
     }
 
     private void asyncPublish(IEnumerable<EventRecord> events)
