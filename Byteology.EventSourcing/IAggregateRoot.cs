@@ -12,5 +12,5 @@ public interface IAggregateRoot
     IEnumerable<IEvent> GetUncommitedEvents();
     void MarkAllEventsAsCommited();
 
-    void ReplayEvent(PersistedEventRecord record);
+    void ReplayEvent(EventRecord record);
 }

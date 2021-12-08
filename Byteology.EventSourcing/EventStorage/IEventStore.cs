@@ -2,6 +2,6 @@
 
 public interface IEventStore
 {
-    IEnumerable<PersistedEventRecord> GetEventStream(Guid id);
-    void AddEvents(IEnumerable<EventRecord> events);
+    IEnumerable<EventRecord> GetEventStream(Guid id);
+    IEnumerable<EventRecord> AddEvents(IEnumerable<EventRecord> events);
 }

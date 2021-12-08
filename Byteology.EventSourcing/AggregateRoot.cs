@@ -24,7 +24,7 @@ public abstract class AggregateRoot : IAggregateRoot
 
     void IAggregateRoot.MarkAllEventsAsCommited() => _newEvents.Clear();
 
-    void IAggregateRoot.ReplayEvent(PersistedEventRecord record)
+    void IAggregateRoot.ReplayEvent(EventRecord record)
     {
         if (record.Metadata.AggregateRootType != this.GetType() || record.Metadata.EventStreamId != EventStreamId)
             throw new ArgumentException("The specified event is meant for another aggregate root.");
