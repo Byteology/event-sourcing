@@ -7,17 +7,14 @@ using System.Text.Json;
 
 public class EfEventStore : DbContext, IEventStore
 {
-    private readonly TypeRegistry<IAggregateRoot> _aggregateRootTypesRegistry;
     private readonly TypeRegistry<IEvent> _eventTypesRegistry;
     private readonly JsonSerializerOptions _serializerOptions;
 
     public EfEventStore(
-        DbContextOptions dbOptions,
-        TypeRegistry<IAggregateRoot> aggregateRootTypesRegistry,
+        DbContextOptions<EfEventStore> dbOptions,
         TypeRegistry<IEvent> eventTypesRegistry,
         JsonSerializerOptions? serializerOptions = null) : base(dbOptions)
     {
-        _aggregateRootTypesRegistry = aggregateRootTypesRegistry;
         _eventTypesRegistry = eventTypesRegistry;
         _serializerOptions = serializerOptions ?? new JsonSerializerOptions(JsonSerializerDefaults.Web);
     }
@@ -37,10 +34,6 @@ public class EfEventStore : DbContext, IEventStore
             builder
                 .HasIndex(nameof(Event.StreamId), nameof(Event.StreamPosition))
                 .IsUnique();
-
-            builder
-                .Property(nameof(Event.AggregateRootType))
-                .IsRequired();
 
             builder
                 .Property(nameof(Event.Type))
@@ -85,7 +78,6 @@ public class EfEventStore : DbContext, IEventStore
         return new Event()
         {
             StreamId = record.Metadata.EventStreamId,
-            AggregateRootType = _aggregateRootTypesRegistry.GetTypeName(record.Metadata.AggregateRootType),
             Issuer = record.Metadata.Issuer,
             Payload = JsonSerializer.Serialize(record.Event, _serializerOptions),
             StreamPosition = record.Metadata.EventStreamPosition,
@@ -100,7 +92,8 @@ public class EfEventStore : DbContext, IEventStore
         Type eventType = _eventTypesRegistry.GetTypeByName(entity.Type);
         IEvent @event = (JsonSerializer.Deserialize(entity.Payload, eventType) as IEvent)!;
 
-        EventMetadata metadata = new(entity.StreamId, _aggregateRootTypesRegistry.GetTypeByName(entity.AggregateRootType), entity.StreamPosition, entity.Timestamp, entity.Issuer, entity.TransactionId);
+        EventMetadata metadata = new(entity.StreamId, entity.StreamPosition, 
+            entity.Timestamp, entity.Issuer, entity.TransactionId);
 
         return new EventRecord(@event, metadata);
     }
