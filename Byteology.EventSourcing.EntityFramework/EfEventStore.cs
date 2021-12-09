@@ -1,22 +1,20 @@
 ﻿namespace Byteology.EventSourcing.EntityFramework;
 
-using Byteology.EventSourcing.Configuration;
 using Byteology.EventSourcing.EventStorage;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 public class EfEventStore : DbContext, IEventStore
 {
     private readonly TypeRegistry<IEvent> _eventTypesRegistry;
-    private readonly JsonSerializerOptions _serializerOptions;
+    private readonly ISerializer<IEvent> _eventSerializer;
 
     public EfEventStore(
         DbContextOptions<EfEventStore> dbOptions,
         TypeRegistry<IEvent> eventTypesRegistry,
-        JsonSerializerOptions? serializerOptions = null) : base(dbOptions)
+        ISerializer<IEvent> eventSerializer) : base(dbOptions)
     {
         _eventTypesRegistry = eventTypesRegistry;
-        _serializerOptions = serializerOptions ?? new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        _eventSerializer = eventSerializer;
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -75,22 +73,25 @@ public class EfEventStore : DbContext, IEventStore
 
     private Event createNewEntity(EventRecord record)
     {
+        string typeName = _eventTypesRegistry.GetTypeName(record.Event.GetType());
+        string serializedEvent = _eventSerializer.Serialize(record.Event);
+
         return new Event()
         {
             StreamId = record.Metadata.EventStreamId,
             Issuer = record.Metadata.Issuer,
-            Payload = JsonSerializer.Serialize(record.Event, _serializerOptions),
             StreamPosition = record.Metadata.EventStreamPosition,
             Timestamp = record.Metadata.Timestamp,
             TransactionId = record.Metadata.TransactionId,
-            Type = _eventTypesRegistry.GetTypeName(record.Event.GetType())
+            Type = typeName,
+            Payload = serializedEvent
         };
     }
 
     private EventRecord convertEntityToRecord(Event entity)
     {
-        Type eventType = _eventTypesRegistry.GetTypeByName(entity.Type);
-        IEvent @event = (JsonSerializer.Deserialize(entity.Payload, eventType) as IEvent)!;
+        Type type = _eventTypesRegistry.GetTypeByName(entity.Type);
+        IEvent @event = _eventSerializer.Deserialize(type, entity.Payload);
 
         EventMetadata metadata = new(entity.StreamId, entity.StreamPosition, 
             entity.Timestamp, entity.Issuer, entity.TransactionId);
