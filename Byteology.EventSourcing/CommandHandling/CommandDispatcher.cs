@@ -77,7 +77,6 @@ public class CommandDispatcher : ICommandDispatcher
                 e,
                 new EventMetadata(
                     aggregateRoot.EventStreamId,
-                    aggregateRoot.GetType(),
                     nextEventPosition++,
                     commandMetadata.Timestamp,
                     commandMetadata.Issuer,

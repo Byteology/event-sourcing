@@ -1,25 +1,20 @@
 ﻿namespace Byteology.EventSourcing.EntityFramework;
 
-using Byteology.EventSourcing.Configuration;
 using Byteology.EventSourcing.EventStorage;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 public class EfEventStore : DbContext, IEventStore
 {
-    private readonly TypeRegistry<IAggregateRoot> _aggregateRootTypesRegistry;
     private readonly TypeRegistry<IEvent> _eventTypesRegistry;
-    private readonly JsonSerializerOptions _serializerOptions;
+    private readonly ISerializer<IEvent> _eventSerializer;
 
     public EfEventStore(
-        DbContextOptions dbOptions,
-        TypeRegistry<IAggregateRoot> aggregateRootTypesRegistry,
+        DbContextOptions<EfEventStore> dbOptions,
         TypeRegistry<IEvent> eventTypesRegistry,
-        JsonSerializerOptions? serializerOptions = null) : base(dbOptions)
+        ISerializer<IEvent> eventSerializer) : base(dbOptions)
     {
-        _aggregateRootTypesRegistry = aggregateRootTypesRegistry;
         _eventTypesRegistry = eventTypesRegistry;
-        _serializerOptions = serializerOptions ?? new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        _eventSerializer = eventSerializer;
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -37,10 +32,6 @@ public class EfEventStore : DbContext, IEventStore
             builder
                 .HasIndex(nameof(Event.StreamId), nameof(Event.StreamPosition))
                 .IsUnique();
-
-            builder
-                .Property(nameof(Event.AggregateRootType))
-                .IsRequired();
 
             builder
                 .Property(nameof(Event.Type))
@@ -82,25 +73,28 @@ public class EfEventStore : DbContext, IEventStore
 
     private Event createNewEntity(EventRecord record)
     {
+        string typeName = _eventTypesRegistry.GetTypeName(record.Event.GetType());
+        string serializedEvent = _eventSerializer.Serialize(record.Event);
+
         return new Event()
         {
             StreamId = record.Metadata.EventStreamId,
-            AggregateRootType = _aggregateRootTypesRegistry.GetTypeName(record.Metadata.AggregateRootType),
             Issuer = record.Metadata.Issuer,
-            Payload = JsonSerializer.Serialize(record.Event, _serializerOptions),
             StreamPosition = record.Metadata.EventStreamPosition,
             Timestamp = record.Metadata.Timestamp,
             TransactionId = record.Metadata.TransactionId,
-            Type = _eventTypesRegistry.GetTypeName(record.Event.GetType())
+            Type = typeName,
+            Payload = serializedEvent
         };
     }
 
     private EventRecord convertEntityToRecord(Event entity)
     {
-        Type eventType = _eventTypesRegistry.GetTypeByName(entity.Type);
-        IEvent @event = (JsonSerializer.Deserialize(entity.Payload, eventType) as IEvent)!;
+        Type type = _eventTypesRegistry.GetTypeByName(entity.Type);
+        IEvent @event = _eventSerializer.Deserialize(type, entity.Payload);
 
-        EventMetadata metadata = new(entity.StreamId, _aggregateRootTypesRegistry.GetTypeByName(entity.AggregateRootType), entity.StreamPosition, entity.Timestamp, entity.Issuer, entity.TransactionId);
+        EventMetadata metadata = new(entity.StreamId, entity.StreamPosition, 
+            entity.Timestamp, entity.Issuer, entity.TransactionId);
 
         return new EventRecord(@event, metadata);
     }

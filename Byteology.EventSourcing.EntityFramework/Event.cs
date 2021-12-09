@@ -8,7 +8,6 @@ internal class Event
     public Guid Id { get; set; }
 
     public Guid StreamId { get; set; }
-    public string AggregateRootType { get; set; }
     public ulong StreamPosition { get; set; }
 
     public string Type { get; set; }
